@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Crop Recommendation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>GenAI Crop Recommendation</h2>
+        <div id="weather-details" class="weather-box">
+            <strong>Weather Data:</strong><br>
+            <label>Temperature:</label> <input type="text" id="temperature" readonly><br>
+            <label>Humidity:</label> <input type="text" id="humidity" readonly><br>
+            <label>Rainfall:</label> <input type="text" id="rainfall" readonly><br>
+        </div>
+
+        <div class="camera-container">
+            <div class="camera-section">
+                <video id="video" width="300" height="200" autoplay></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+
+                <div class="camera-buttons">
+                    <button id="capture-btn">Capture Image</button>
+                    <label for="browse-image" class="custom-file-label">Browse</label>
+                    <input type="file" id="browse-image" accept="image/*">
+                </div>
+
+                <div class='image-preview' id="image-preview" style="display:none;">
+                    <img id="captured-image" width="300" height="200">
+                </div>
+                <button id="predict-btn">Predict Disease</button>
+            </div>
+        </div>
+
+
+        <h2>Detected Crop Disease:</h2>
+        <div class="genAi">
+            <input type="text" id="disease" placeholder="Disease Predicted by Model">
+            <button onclick="getRecommendation()">Get Recommendation</button>
+        </div>
+
+        <div id="suggestion"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>
