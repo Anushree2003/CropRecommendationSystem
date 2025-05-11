@@ -25,7 +25,13 @@ load_dotenv()
 # print(f"API Key: {api_key}")  # Debug print to verify the key is loaded.
 # model = genai.GenerativeModel("gemini-1.5-pro")
 
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")  
+if not PERPLEXITY_API_KEY:
+    raise ValueError("Perplexity API Key is missing or not loaded.")
+perplexity_client = openai.OpenAI(
+    api_key=PERPLEXITY_API_KEY,
+    base_url="https://api.perplexity.ai" 
+)
 
 @app.route('/')
 def index():
@@ -51,58 +57,58 @@ def upload_image():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# model_path = 'model/best_model.h5'
-# mapping_path = 'model/class_mapping.json'
+model_path = 'model/best_model.h5'
+mapping_path = 'model/class_mapping.json'
 
-# model_dl = load_model(model_path)
-# with open(mapping_path, 'r') as f:
-#     class_mapping = json.load(f)
+model_dl = load_model(model_path)
+with open(mapping_path, 'r') as f:
+    class_mapping = json.load(f)
 
 @app.route('/predict-disease', methods=['POST'])
-# def predict_disease():
-#     try:
-#         data = request.get_json()
-#         image_data = data['image'].split(",")[1]
-#         image_bytes = base64.b64decode(image_data)
-#         image = Image.open(BytesIO(image_bytes)).convert("RGB")
-#         image = image.resize((256, 256))  
-
-#         image_array = img_to_array(image) / 255.0
-#         image_array = np.expand_dims(image_array, axis=0)
-
-#         prediction = model_dl.predict(image_array)
-#         predicted_class = np.argmax(prediction[0])
-#         predicted_label = class_mapping[str(predicted_class)].replace("_", " ")
-#         print(predicted_label)
-#         return jsonify({'predicted_disease': predicted_label})
-
-#     except Exception as e:
-#         return jsonify({'error': f"Prediction error: {str(e)}"})
-
 def predict_disease():
     try:
         data = request.get_json()
         image_data = data['image'].split(",")[1]
         image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes)).convert("RGB")
+        image = image.resize((256, 256))  
 
-        image_part = {
-            "mime_type" : "image/png",
-            "data" : image_bytes
-        }
-        prompt = (
-            "You are an expert in plant pathology. Analyze this leaf image and predict the disease it shows. "
-            "If the leaf appears healthy, respond with just 'Healthy'. Otherwise, respond with the name of the disease."
-        )
+        image_array = img_to_array(image) / 255.0
+        image_array = np.expand_dims(image_array, axis=0)
 
-        response = model.generate_content(
-            [prompt, image_part],
-            generation_config={"temperature": 0.3})
-
-        predicted_label = response.text.strip()
+        prediction = model_dl.predict(image_array)
+        predicted_class = np.argmax(prediction[0])
+        predicted_label = class_mapping[str(predicted_class)].replace("_", " ")
+        print(predicted_label)
         return jsonify({'predicted_disease': predicted_label})
 
     except Exception as e:
-        return jsonify({'error': f"Gemini prediction error: {str(e)}"})
+        return jsonify({'error': f"Prediction error: {str(e)}"})
+
+# def predict_disease():
+#     try:
+#         data = request.get_json()
+#         image_data = data['image'].split(",")[1]
+#         image_bytes = base64.b64decode(image_data)
+
+#         image_part = {
+#             "mime_type" : "image/png",
+#             "data" : image_bytes
+#         }
+#         prompt = (
+#             "You are an expert in plant pathology. Analyze this leaf image and predict the disease it shows. "
+#             "If the leaf appears healthy, respond with just 'Healthy'. Otherwise, respond with the name of the disease."
+#         )
+
+#         response = model.generate_content(
+#             [prompt, image_part],
+#             generation_config={"temperature": 0.3})
+
+#         predicted_label = response.text.strip()
+#         return jsonify({'predicted_disease': predicted_label})
+
+#     except Exception as e:
+#         return jsonify({'error': f"Gemini prediction error: {str(e)}"})
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -119,8 +125,8 @@ def recommend():
     """
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+        response = perplexity_client.chat.completions.create(
+            model="sonar-pro",  #  Using sonar-pro model
             messages=[
                 {"role": "user", "content": prompt}
             ]
