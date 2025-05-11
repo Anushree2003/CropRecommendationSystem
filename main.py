@@ -10,12 +10,14 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 import json
 import google.generativeai as genai
+from dotenv import load_dotenv
 
 
 app = Flask(__name__)
 CORS(app)
 
-genai.configure(api_key="AIzaSyARxaxsTyYLR_FWrVjsZi8YyHdloUomsd4")
+genai.configure(api_key=os.getenv("gemini_api_key"))
+load_dotenv()
 model = genai.GenerativeModel("gemini-1.5-pro")
 
 @app.route('/')
