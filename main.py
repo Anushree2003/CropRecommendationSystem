@@ -11,14 +11,21 @@ from tensorflow.keras.preprocessing.image import img_to_array
 import json
 import google.generativeai as genai
 from dotenv import load_dotenv
+import openai
 
 
 app = Flask(__name__)
 CORS(app)
-
-genai.configure(api_key=os.getenv("gemini_api_key"))
 load_dotenv()
-model = genai.GenerativeModel("gemini-1.5-pro")
+# genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# api_key = os.getenv("GOOGLE_API_KEY")
+# if not api_key:
+#     raise ValueError("Google API Key is missing or not loaded.")
+# print(f"API Key: {api_key}")  # Debug print to verify the key is loaded.
+# model = genai.GenerativeModel("gemini-1.5-pro")
+
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/')
 def index():
@@ -97,12 +104,14 @@ def predict_disease():
     except Exception as e:
         return jsonify({'error': f"Gemini prediction error: {str(e)}"})
 
-
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    """Generates a recommendation based on user input."""
     data = request.get_json()
-    crop_disease = data['disease']
+    print("Received data:", data)
+
+    crop_disease = data.get('disease')
+    if not crop_disease:
+        return jsonify({"error": "No disease provided"}), 400
 
     prompt = f"""
     Provide a concise and practical recommendation for managing the crop disease: {crop_disease}.
@@ -110,12 +119,17 @@ def recommend():
     """
 
     try:
-        response = model.generate_content(prompt)
-        suggestion = response.text.strip()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        suggestion = response.choices[0].message.content.strip()
         return jsonify({"suggestion": suggestion})
-
     except Exception as e:
-        return jsonify({"error": str(e)})
+        print("ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
